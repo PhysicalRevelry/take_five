@@ -53,9 +53,37 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
   }
 
-  testWidgets('shows the empty state when there are no items', (tester) async {
+  testWidgets('shows the empty state with starter guidance when no items',
+      (tester) async {
     await pumpScreen(tester);
     expect(find.textContaining('No tasks yet'), findsOneWidget);
+    expect(
+      find.text('Start with five tasks, and you can add up to fifty.'),
+      findsOneWidget,
+    );
+    await disposeScreen(tester);
+  });
+
+  testWidgets('nudges to add at least five when below the minimum',
+      (tester) async {
+    await db.addTask(title: 'Only one');
+    await pumpScreen(tester);
+    expect(
+      find.text('Please add at least five tasks to get started.'),
+      findsOneWidget,
+    );
+    await disposeScreen(tester);
+  });
+
+  testWidgets('hides the nudge once the minimum is reached', (tester) async {
+    for (var i = 0; i < AppDatabase.minTasks; i++) {
+      await db.addTask(title: 'task $i');
+    }
+    await pumpScreen(tester);
+    expect(
+      find.text('Please add at least five tasks to get started.'),
+      findsNothing,
+    );
     await disposeScreen(tester);
   });
 

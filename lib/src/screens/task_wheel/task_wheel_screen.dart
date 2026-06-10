@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
+import '../tasks/tasks_screen.dart';
 import 'task_wheel_painter.dart';
 import 'use_task_wheel_screen.dart';
 
@@ -21,9 +22,29 @@ class TaskWheelScreen extends HookWidget {
         backgroundColor: scheme.inversePrimary,
         title: const Text('Take Five'),
       ),
+      // A drawer makes the Scaffold show the hamburger menu in the AppBar's
+      // leading slot automatically.
+      drawer: const _AppDrawer(),
       body: Column(
         children: [
           Expanded(
+            flex: 1,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  'Take five minutes to...',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context)
+                      .textTheme
+                      .headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 5,
             child: Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -53,6 +74,37 @@ class TaskWheelScreen extends HookWidget {
           ),
           _ResultBanner(label: wheel.selectedLabel),
         ],
+      ),
+    );
+  }
+}
+
+/// Navigation drawer. Holds a single entry for now — opening the task list
+/// editor ([TasksScreen]).
+class _AppDrawer extends StatelessWidget {
+  const _AppDrawer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      child: SafeArea(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.checklist),
+              title: const Text('Edit task list'),
+              onTap: () {
+                Navigator.pop(context); // close the drawer first
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const TasksScreen(title: 'Edit task list'),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

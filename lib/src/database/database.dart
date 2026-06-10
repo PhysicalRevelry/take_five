@@ -54,6 +54,10 @@ class AppDatabase extends _$AppDatabase {
   /// The maximum number of tasks the list may hold.
   static const int maxTasks = 50;
 
+  /// The number of tasks recommended before the wheel is useful. Not enforced
+  /// by the database — purely a UI nudge.
+  static const int minTasks = 5;
+
   /// The inclusive maximum length of a task title (in Unicode code points),
   /// mirroring the schema's `withLength(max: 100)` CHECK constraint.
   static const int maxTitleLength = 100;

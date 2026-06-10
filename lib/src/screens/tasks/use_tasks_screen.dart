@@ -11,7 +11,9 @@ class TasksScreenModel {
     required this.tasks,
     required this.canAdd,
     required this.atCapacity,
+    required this.belowMinimum,
     required this.maxTasks,
+    required this.minTasks,
     required this.maxTitleLength,
     required this.maxDescriptionLength,
     required this.onAdd,
@@ -30,8 +32,15 @@ class TasksScreenModel {
   /// banner — distinct from [canAdd] so the banner does not flash during load.
   final bool atCapacity;
 
+  /// Whether the list has at least one task but fewer than [minTasks] — drives
+  /// the "add at least five" nudge. False while empty or once the minimum is met.
+  final bool belowMinimum;
+
   /// The maximum number of tasks allowed.
   final int maxTasks;
+
+  /// The recommended minimum number of tasks.
+  final int minTasks;
 
   /// The maximum title length, for client-side form validation.
   final int maxTitleLength;
@@ -60,7 +69,9 @@ TasksScreenModel useTasksScreen(WidgetRef ref) {
     tasks: tasks,
     canAdd: hasData && count < AppDatabase.maxTasks,
     atCapacity: hasData && count >= AppDatabase.maxTasks,
+    belowMinimum: hasData && count > 0 && count < AppDatabase.minTasks,
     maxTasks: AppDatabase.maxTasks,
+    minTasks: AppDatabase.minTasks,
     maxTitleLength: AppDatabase.maxTitleLength,
     maxDescriptionLength: AppDatabase.maxDescriptionLength,
     onAdd: repo.add,

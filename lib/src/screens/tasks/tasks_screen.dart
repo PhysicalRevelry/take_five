@@ -27,6 +27,8 @@ class TasksScreen extends HookConsumerWidget {
         children: [
           if (model.atCapacity)
             _CapBanner(maxTasks: model.maxTasks),
+          if (model.belowMinimum)
+            const _BelowMinBanner(),
           Expanded(
             child: model.tasks.when(
               loading: () =>
@@ -87,13 +89,46 @@ class _CapBanner extends StatelessWidget {
   }
 }
 
+/// Shown at the top of the list while it holds at least one task but fewer than
+/// the recommended minimum, nudging the user toward a usable wheel.
+class _BelowMinBanner extends StatelessWidget {
+  const _BelowMinBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      width: double.infinity,
+      color: scheme.secondaryContainer,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Text(
+        'Please add at least five tasks to get started.',
+        style: TextStyle(color: scheme.onSecondaryContainer),
+      ),
+    );
+  }
+}
+
 class _EmptyState extends StatelessWidget {
   const _EmptyState();
 
   @override
   Widget build(BuildContext context) {
     return const Center(
-      child: Text('No tasks yet. Tap + to add your first one.'),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('No tasks yet. Tap + to add your first one.'),
+            SizedBox(height: 8),
+            Text(
+              'Start with five tasks, and you can add up to fifty.',
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
