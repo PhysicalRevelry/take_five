@@ -20,8 +20,8 @@ void main() {
       expect(items, isEmpty);
     });
 
-    test('reports schema version 2', () {
-      expect(db.schemaVersion, 2);
+    test('reports schema version 3', () {
+      expect(db.schemaVersion, 3);
     });
 
     test('round-trips a row through the generated TaskRow/companion types',

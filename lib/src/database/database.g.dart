@@ -56,8 +56,29 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, TaskRow> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _onWheelMeta = const VerificationMeta(
+    'onWheel',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, position, title, description];
+  late final GeneratedColumn<bool> onWheel = GeneratedColumn<bool>(
+    'on_wheel',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("on_wheel" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    position,
+    title,
+    description,
+    onWheel,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -98,6 +119,12 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, TaskRow> {
         ),
       );
     }
+    if (data.containsKey('on_wheel')) {
+      context.handle(
+        _onWheelMeta,
+        onWheel.isAcceptableOrUnknown(data['on_wheel']!, _onWheelMeta),
+      );
+    }
     return context;
   }
 
@@ -123,6 +150,10 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, TaskRow> {
         DriftSqlType.string,
         data['${effectivePrefix}description'],
       ),
+      onWheel: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}on_wheel'],
+      )!,
     );
   }
 
@@ -144,11 +175,17 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
 
   /// Optional free-form detail.
   final String? description;
+
+  /// Whether the task currently occupies a wheel section. Maintained by the
+  /// wheel logic ([AppDatabase.landOnTask]) and reset to the lowest 15 tasks
+  /// whenever the list is mutated.
+  final bool onWheel;
   const TaskRow({
     required this.id,
     required this.position,
     required this.title,
     this.description,
+    required this.onWheel,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -159,6 +196,7 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
     if (!nullToAbsent || description != null) {
       map['description'] = Variable<String>(description);
     }
+    map['on_wheel'] = Variable<bool>(onWheel);
     return map;
   }
 
@@ -170,6 +208,7 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
       description: description == null && nullToAbsent
           ? const Value.absent()
           : Value(description),
+      onWheel: Value(onWheel),
     );
   }
 
@@ -183,6 +222,7 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
       position: serializer.fromJson<int>(json['position']),
       title: serializer.fromJson<String>(json['title']),
       description: serializer.fromJson<String?>(json['description']),
+      onWheel: serializer.fromJson<bool>(json['onWheel']),
     );
   }
   @override
@@ -193,6 +233,7 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
       'position': serializer.toJson<int>(position),
       'title': serializer.toJson<String>(title),
       'description': serializer.toJson<String?>(description),
+      'onWheel': serializer.toJson<bool>(onWheel),
     };
   }
 
@@ -201,11 +242,13 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
     int? position,
     String? title,
     Value<String?> description = const Value.absent(),
+    bool? onWheel,
   }) => TaskRow(
     id: id ?? this.id,
     position: position ?? this.position,
     title: title ?? this.title,
     description: description.present ? description.value : this.description,
+    onWheel: onWheel ?? this.onWheel,
   );
   TaskRow copyWithCompanion(TasksCompanion data) {
     return TaskRow(
@@ -215,6 +258,7 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
       description: data.description.present
           ? data.description.value
           : this.description,
+      onWheel: data.onWheel.present ? data.onWheel.value : this.onWheel,
     );
   }
 
@@ -224,13 +268,14 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
           ..write('id: $id, ')
           ..write('position: $position, ')
           ..write('title: $title, ')
-          ..write('description: $description')
+          ..write('description: $description, ')
+          ..write('onWheel: $onWheel')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, position, title, description);
+  int get hashCode => Object.hash(id, position, title, description, onWheel);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -238,7 +283,8 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
           other.id == this.id &&
           other.position == this.position &&
           other.title == this.title &&
-          other.description == this.description);
+          other.description == this.description &&
+          other.onWheel == this.onWheel);
 }
 
 class TasksCompanion extends UpdateCompanion<TaskRow> {
@@ -246,17 +292,20 @@ class TasksCompanion extends UpdateCompanion<TaskRow> {
   final Value<int> position;
   final Value<String> title;
   final Value<String?> description;
+  final Value<bool> onWheel;
   const TasksCompanion({
     this.id = const Value.absent(),
     this.position = const Value.absent(),
     this.title = const Value.absent(),
     this.description = const Value.absent(),
+    this.onWheel = const Value.absent(),
   });
   TasksCompanion.insert({
     this.id = const Value.absent(),
     required int position,
     required String title,
     this.description = const Value.absent(),
+    this.onWheel = const Value.absent(),
   }) : position = Value(position),
        title = Value(title);
   static Insertable<TaskRow> custom({
@@ -264,12 +313,14 @@ class TasksCompanion extends UpdateCompanion<TaskRow> {
     Expression<int>? position,
     Expression<String>? title,
     Expression<String>? description,
+    Expression<bool>? onWheel,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (position != null) 'position': position,
       if (title != null) 'title': title,
       if (description != null) 'description': description,
+      if (onWheel != null) 'on_wheel': onWheel,
     });
   }
 
@@ -278,12 +329,14 @@ class TasksCompanion extends UpdateCompanion<TaskRow> {
     Value<int>? position,
     Value<String>? title,
     Value<String?>? description,
+    Value<bool>? onWheel,
   }) {
     return TasksCompanion(
       id: id ?? this.id,
       position: position ?? this.position,
       title: title ?? this.title,
       description: description ?? this.description,
+      onWheel: onWheel ?? this.onWheel,
     );
   }
 
@@ -302,6 +355,9 @@ class TasksCompanion extends UpdateCompanion<TaskRow> {
     if (description.present) {
       map['description'] = Variable<String>(description.value);
     }
+    if (onWheel.present) {
+      map['on_wheel'] = Variable<bool>(onWheel.value);
+    }
     return map;
   }
 
@@ -311,7 +367,8 @@ class TasksCompanion extends UpdateCompanion<TaskRow> {
           ..write('id: $id, ')
           ..write('position: $position, ')
           ..write('title: $title, ')
-          ..write('description: $description')
+          ..write('description: $description, ')
+          ..write('onWheel: $onWheel')
           ..write(')'))
         .toString();
   }
@@ -338,6 +395,7 @@ typedef $$TasksTableCreateCompanionBuilder =
       required int position,
       required String title,
       Value<String?> description,
+      Value<bool> onWheel,
     });
 typedef $$TasksTableUpdateCompanionBuilder =
     TasksCompanion Function({
@@ -345,6 +403,7 @@ typedef $$TasksTableUpdateCompanionBuilder =
       Value<int> position,
       Value<String> title,
       Value<String?> description,
+      Value<bool> onWheel,
     });
 
 class $$TasksTableFilterComposer extends Composer<_$AppDatabase, $TasksTable> {
@@ -372,6 +431,11 @@ class $$TasksTableFilterComposer extends Composer<_$AppDatabase, $TasksTable> {
 
   ColumnFilters<String> get description => $composableBuilder(
     column: $table.description,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get onWheel => $composableBuilder(
+    column: $table.onWheel,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -404,6 +468,11 @@ class $$TasksTableOrderingComposer
     column: $table.description,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get onWheel => $composableBuilder(
+    column: $table.onWheel,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$TasksTableAnnotationComposer
@@ -428,6 +497,9 @@ class $$TasksTableAnnotationComposer
     column: $table.description,
     builder: (column) => column,
   );
+
+  GeneratedColumn<bool> get onWheel =>
+      $composableBuilder(column: $table.onWheel, builder: (column) => column);
 }
 
 class $$TasksTableTableManager
@@ -462,11 +534,13 @@ class $$TasksTableTableManager
                 Value<int> position = const Value.absent(),
                 Value<String> title = const Value.absent(),
                 Value<String?> description = const Value.absent(),
+                Value<bool> onWheel = const Value.absent(),
               }) => TasksCompanion(
                 id: id,
                 position: position,
                 title: title,
                 description: description,
+                onWheel: onWheel,
               ),
           createCompanionCallback:
               ({
@@ -474,11 +548,13 @@ class $$TasksTableTableManager
                 required int position,
                 required String title,
                 Value<String?> description = const Value.absent(),
+                Value<bool> onWheel = const Value.absent(),
               }) => TasksCompanion.insert(
                 id: id,
                 position: position,
                 title: title,
                 description: description,
+                onWheel: onWheel,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

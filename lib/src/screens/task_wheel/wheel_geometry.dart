@@ -2,6 +2,10 @@ import 'dart:math';
 
 import 'package:flutter/painting.dart';
 
+// Re-export the shared section limits so existing geometry consumers keep
+// importing [wheelMinSections] / [wheelMaxSections] from here.
+export '../../wheel_limits.dart' show wheelMinSections, wheelMaxSections;
+
 /// Pure geometry + selection math for the hand-rolled task wheel. Kept free of
 /// widgets and animation so it can be unit/property-tested directly. The widget
 /// layer ([useTaskWheelScreen], [TaskWheelPainter]) consumes these.
@@ -9,11 +13,6 @@ import 'package:flutter/painting.dart';
 /// Angle convention matches Flutter's canvas: 0 rad points along +x (3 o'clock)
 /// and angles increase clockwise. Wedge `index` occupies
 /// `[index * sweep, (index + 1) * sweep)` in the wheel's own (unrotated) frame.
-
-/// Fewest / most sections the wheel supports. Today the labels are hard-coded to
-/// five; the range anticipates wiring the wheel to a 2–15 item task list.
-const int wheelMinSections = 2;
-const int wheelMaxSections = 15;
 
 /// Screen-space angle the fixed pointer sits at: straight up (12 o'clock).
 const double wheelPointerAngle = -pi / 2;

@@ -22,4 +22,7 @@ class TaskRepository {
 
   /// Deletes a task and re-sequences the remainder.
   Future<void> delete(int id) => _db.deleteTask(id);
+
+  /// Records a wheel landing on the task at [position], rotating the wheel.
+  Future<void> landOn(int position) => _db.landOnTask(position);
 }

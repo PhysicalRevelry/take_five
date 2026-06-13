@@ -244,4 +244,7 @@ class _ThrowingRepository implements TaskRepository {
 
   @override
   Future<void> delete(int id) async {}
+
+  @override
+  Future<void> landOn(int position) async {}
 }
